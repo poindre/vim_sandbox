@@ -1,0 +1,11 @@
+version: '3.3'
+
+services:
+  sandbox:
+    build: ./docker
+    container_name: vim_sandbox
+    tty: true
+    volumes:
+      - type: bind
+        source: ./home
+        target: /home/yoyoyo
