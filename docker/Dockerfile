@@ -2,13 +2,40 @@ FROM ubuntu:latest
 
 MAINTAINER s-yoyoyo
 
-run apt-get update -y && \
+ARG UID
+ARG GID
+ARG USERNAME
+ARG REPO
+
+# apt-get install実行時のエラー対策
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ロケール環境変数の設定
+ENV lang="ja_jp.utf-8" language="ja_jp:ja" lc_all="ja_jp.utf-8"
+
+# ユーザとホームディレクトリの環境変数設定
+ENV USER $USERNAME
+ENV HOME /home/${USER}
+
+# zshと必要なパッケージをインストール
+RUN apt-get update \
+   && apt-get install -y zsh vim sed git
+
+# zshを実行
+RUN zsh
+
+# 環境変数の設定
+ENV SHELL /usr/bin/zsh
+
+# ログインシェルを指定
+RUN sed -i.bak "s|$HOME:|$HOME:$SHELL|" /etc/passwd
+
+RUN apt-get update -y && \
     apt-get install -y software-properties-common && \
     apt-add-repository -y ppa:neovim-ppa/stable && \
     apt-get update -y && \
     apt-get install -y \
     curl \
-    git \
     language-pack-ja-base \
     language-pack-ja \
     neovim \
@@ -16,15 +43,44 @@ run apt-get update -y && \
     python3-dev \
     python3-pip
 
-env lang="ja_jp.utf-8" language="ja_jp:ja" lc_all="ja_jp.utf-8"
+# 一般ユーザを追加
+RUN groupadd -g ${GID} ${USER}
+RUN useradd -g ${GID} -u ${UID} -m ${USER}
+# sudo権限を付与
+RUN gpasswd -a ${USER} sudo
+# パスワードを設定
+RUN echo "$USER:yoyoyo_pass" | chpasswd
 
-run pip3 install --upgrade neovim
+ADD ./github_id_rsa $HOME/.ssh/id_rsa
+ADD ./github_id_rsa.pub $HOME/.ssh/id_rsa.pub
 
-env user yoyoyo
-env home /home/${user}
+RUN chmod 600 $HOME/.ssh/id_rsa
+RUN chown -R ${USER}:${USER} $HOME/.ssh 
 
-run useradd -m ${user}
-run gpasswd -a ${user} sudo
+# ユーザと作業ディレクトリの変更
+USER ${USER}
+WORKDIR $HOME
 
-user ${user}
-workdir $home
+RUN ssh -o StrictHostKeyChecking=no github.com; exit 0
+RUN git clone $REPO $HOME/.dotfiles
+
+# .zshディレクトリ、.dotfilesディレクトリの作成
+RUN mkdir $HOME/.zsh
+
+# preztoをクローン
+RUN git clone --recursive \
+        https://github.com/sorin-ionescu/prezto.git \
+        $HOME/.zsh/.zprezto
+
+# preztoのシンボリックリンクを設定
+RUN ln -s $HOME/.zsh/.zprezto/runcoms/zlogin    $HOME/.zsh/.zlogin \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zlogout   $HOME/.zsh/.zlogout \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zpreztorc $HOME/.zsh/.zpreztorc \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zprofile  $HOME/.zsh/.zprofile \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zshenv    $HOME/.zsh/.zshenv \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zshrc     $HOME/.dotfiles/.zshrc
+
+# RUN echo "export LANG=ja_JP.UTF-8" >> $HOME/.zshrc
+RUN echo "export ZDOTDIR=$home/.zsh" >> $HOME/.zshrc
+
+RUN pip3 install --upgrade neovim

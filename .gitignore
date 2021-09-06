@@ -1,3 +1,7 @@
 .DS_*
 home/*
 !home/.keep
+.env
+docker/github_id_rsa
+docker/github_id_rsa.pub
+docker/gitconfig
