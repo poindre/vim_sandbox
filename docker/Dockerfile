@@ -28,7 +28,8 @@ RUN zsh
 ENV SHELL /usr/bin/zsh
 
 # ログインシェルを指定
-RUN sed -i.bak "s|$HOME:|$HOME:$SHELL|" /etc/passwd
+# RUN sed -i.bak "s|$HOME:|$HOME:$SHELL|" /etc/passwd
+RUN chsh -s /bin/zsh
 
 RUN apt-get update -y && \
     apt-get install -y software-properties-common && \
@@ -61,8 +62,12 @@ RUN chown -R ${USER}:${USER} $HOME/.ssh
 USER ${USER}
 WORKDIR $HOME
 
+# .dotfilesのクローン
+RUN git config --global user.email "<>"
+RUN git config --global user.name "s-yoyoyo"
 RUN ssh -o StrictHostKeyChecking=no github.com; exit 0
 RUN git clone $REPO $HOME/.dotfiles
+RUN cd $HOME/.dotfiles && git pull origin main
 
 # .zshディレクトリ、.dotfilesディレクトリの作成
 RUN mkdir $HOME/.zsh
@@ -73,14 +78,17 @@ RUN git clone --recursive \
         $HOME/.zsh/.zprezto
 
 # preztoのシンボリックリンクを設定
-RUN ln -s $HOME/.zsh/.zprezto/runcoms/zlogin    $HOME/.zsh/.zlogin \
+RUN ln -s $HOME/.zsh/.zprezto/runcoms/zlogin       $HOME/.zsh/.zlogin \
     && ln -s $HOME/.zsh/.zprezto/runcoms/zlogout   $HOME/.zsh/.zlogout \
-    && ln -s $HOME/.zsh/.zprezto/runcoms/zpreztorc $HOME/.zsh/.zpreztorc \
+    && ln -s $HOME/.dotfiles/.zpreztorc            $HOME/.zsh/.zpreztorc \
     && ln -s $HOME/.zsh/.zprezto/runcoms/zprofile  $HOME/.zsh/.zprofile \
     && ln -s $HOME/.zsh/.zprezto/runcoms/zshenv    $HOME/.zsh/.zshenv \
-    && ln -s $HOME/.zsh/.zprezto/runcoms/zshrc     $HOME/.dotfiles/.zshrc
+    && ln -s $HOME/.dotfiles/.zshrc                $HOME/.zsh/.zshrc
 
-# RUN echo "export LANG=ja_JP.UTF-8" >> $HOME/.zshrc
-RUN echo "export ZDOTDIR=$home/.zsh" >> $HOME/.zshrc
+# powerlinep10kのシンボリックリンクを設定
+RUN ln -s $HOME/.dotfiles/.p10k.zsh $HOME/.zsh/.p10k.zsh
+
+# ZDOTDIRの設定
+RUN echo "export ZDOTDIR=$HOME/.zsh" >> $HOME/.zshenv
 
 RUN pip3 install --upgrade neovim
