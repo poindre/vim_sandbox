@@ -7,6 +7,11 @@ ARG GID
 ARG USERNAME
 ARG REPO
 
+# ロケール環境変数の設定
+ENV LANG ja_JP.UTF-8
+ENV LANGUAGE ja_JP:ja
+ENV LC_ALL ja_JP.UTF-8
+
 # apt-get install実行時のエラー対策
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -16,6 +21,7 @@ ENV lang="ja_jp.utf-8" language="ja_jp:ja" lc_all="ja_jp.utf-8"
 # ユーザとホームディレクトリの環境変数設定
 ENV USER $USERNAME
 ENV HOME /home/${USER}
+ENV DOTDIR ${HOME}/.dotfiles
 
 # zshと必要なパッケージをインストール
 RUN apt-get update \
@@ -36,6 +42,7 @@ RUN apt-get update -y && \
     apt-add-repository -y ppa:neovim-ppa/stable && \
     apt-get update -y && \
     apt-get install -y \
+    libssl-dev \
     curl \
     language-pack-ja-base \
     language-pack-ja \
@@ -62,15 +69,23 @@ RUN chown -R ${USER}:${USER} $HOME/.ssh
 USER ${USER}
 WORKDIR $HOME
 
+# ディレクトリの作成
+RUN mkdir $HOME/.zsh
+RUN mkdir $HOME/.vim
+RUN mkdir -p $HOME/.config/nvim
+RUN mkdir -p $HOME/.cache/dein/repos/github.com/Shougo
+
 # .dotfilesのクローン
 RUN git config --global user.email "<>"
 RUN git config --global user.name "s-yoyoyo"
 RUN ssh -o StrictHostKeyChecking=no github.com; exit 0
-RUN git clone $REPO $HOME/.dotfiles
-RUN cd $HOME/.dotfiles && git pull origin main
+RUN git clone $REPO $DOTDIR
+RUN cd $DOTDIR && git pull origin main
 
-# .zshディレクトリ、.dotfilesディレクトリの作成
-RUN mkdir $HOME/.zsh
+# zshファイルのシンボリックリンクを設定
+RUN ln -s $DOTDIR/.zshrc.d $HOME/.zsh/.zshrc.d
+# init.vimのシンボリックリンクを設定
+RUN ln -s $DOTDIR/init.vim $HOME/.config/nvim/init.vim
 
 # preztoをクローン
 RUN git clone --recursive \
@@ -78,17 +93,30 @@ RUN git clone --recursive \
         $HOME/.zsh/.zprezto
 
 # preztoのシンボリックリンクを設定
-RUN ln -s $HOME/.zsh/.zprezto/runcoms/zlogin       $HOME/.zsh/.zlogin \
-    && ln -s $HOME/.zsh/.zprezto/runcoms/zlogout   $HOME/.zsh/.zlogout \
-    && ln -s $HOME/.dotfiles/.zpreztorc            $HOME/.zsh/.zpreztorc \
-    && ln -s $HOME/.zsh/.zprezto/runcoms/zprofile  $HOME/.zsh/.zprofile \
-    && ln -s $HOME/.zsh/.zprezto/runcoms/zshenv    $HOME/.zsh/.zshenv \
-    && ln -s $HOME/.dotfiles/.zshrc                $HOME/.zsh/.zshrc
+RUN ln -s $HOME/.zsh/.zprezto/runcoms/zlogin      $HOME/.zsh/.zlogin \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zlogout  $HOME/.zsh/.zlogout \
+    && ln -s $DOTDIR/.zpreztorc                   $HOME/.zsh/.zpreztorc \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zprofile $HOME/.zsh/.zprofile \
+    && ln -s $HOME/.zsh/.zprezto/runcoms/zshenv   $HOME/.zsh/.zshenv \
+    && ln -s $DOTDIR/.zshrc                       $HOME/.zsh/.zshrc
 
 # powerlinep10kのシンボリックリンクを設定
-RUN ln -s $HOME/.dotfiles/.p10k.zsh $HOME/.zsh/.p10k.zsh
+RUN ln -s $DOTDIR/.p10k.zsh $HOME/.zsh/.p10k.zsh
 
-# ZDOTDIRの設定
-RUN echo "export ZDOTDIR=$HOME/.zsh" >> $HOME/.zshenv
+# coc^setting.jsonのシンボリックリンクを設定
+RUN ln -s $DOTDIR/coc-setting.json $HOME/.vim/coc-setting.json
+
+# anyenvをクローン
+RUN git clone https://github.com/anyenv/anyenv \
+        $HOME/.anyenv
+
+ADD ./.zshenv $HOME/.zshenv
+
+RUN $HOME/.anyenv/bin/anyenv install --force-init
+RUN $HOME/.anyenv/bin/anyenv install nodenv
+RUN $HOME/.anyenv/bin/anyenv install rbenv
+RUN $HOME/.anyenv/bin/anyenv install pyenv
 
 RUN pip3 install --upgrade neovim
+
+COPY ./setup.sh $HOME/setup.sh
