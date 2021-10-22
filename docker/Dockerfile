@@ -95,7 +95,7 @@ RUN mkdir -p $HOME/.cache/dein/repos/github.com/Shougo
 
 # .dotfilesのクローン
 RUN git config --global user.email "<>"
-RUN git config --global user.name "s-yoyoyo"
+RUN git config --global user.name ${USER}
 RUN ssh -o StrictHostKeyChecking=no github.com; exit 0
 RUN git clone $REPO $DOTDIR
 RUN cd $DOTDIR && git pull origin main
@@ -127,6 +127,8 @@ RUN ln -s $DOTDIR/coc-setting.json $HOME/.vim/coc-setting.json
 # anyenvをクローン
 RUN git clone https://github.com/anyenv/anyenv \
         $HOME/.anyenv
+
+RUN ln -s $DOTDIR/.tigrc $HOME/.tigrc
 
 ADD ./.zshenv $HOME/.zshenv
 
