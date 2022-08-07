@@ -47,7 +47,7 @@ then
 fi
 
 # Change extension names to the extensions you need
-npm install coc-snippets coc-blade-linter coc-css coc-cssmodules coc-emmet coc-eslint coc-html coc-htmlhint @yaegassy/coc-intelephense coc-json coc-prettier coc-sh coc-stylelint coc-toml coc-tsserver coc-yaml --global-style --ignore-scripts --no-bin-links --no-package-lock --only=prod
+npm install coc-snippets coc-blade-linter coc-css coc-cssmodules coc-emmet coc-eslint coc-html coc-htmlhint @yaegassy/coc-intelephense coc-json coc-prettier coc-sh coc-stylelint coc-toml coc-tsserver coc-yaml coc-spell-checker --global-style --ignore-scripts --no-bin-links --no-package-lock --only=prod
 
 # Set Git alias
 git config --global alias.st status
