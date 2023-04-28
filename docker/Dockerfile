@@ -128,6 +128,8 @@ RUN ln -s $DOTDIR/coc-setting.json $HOME/.vim/coc-setting.json
 RUN git clone https://github.com/anyenv/anyenv \
         $HOME/.anyenv
 
+RUN ln -s $DOTDIR/.tigrc $HOME/.tigrc
+
 ADD ./.zshenv $HOME/.zshenv
 
 RUN $HOME/.anyenv/bin/anyenv install --force-init

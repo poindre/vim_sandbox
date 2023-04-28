@@ -1,5 +1,15 @@
 set -eux
 
+# setup Environment Variables
+export DOTDIR=${HOME}/.dotfiles
+cd ~/
+
+# create Directories
+mkdir $HOME/.zsh
+mkdir $HOME/.vim
+mkdir -p $HOME/.config/nvim
+mkdir -p $HOME/.cache/dein/repos/github.com/Shougo
+
 # setup node.js
 if [ ! -x "$(command -v node)" ]; then
   nodenv install 16.9.1
@@ -37,7 +47,13 @@ then
 fi
 
 # Change extension names to the extensions you need
-npm install coc-snippets coc-blade-linter coc-css coc-cssmodules coc-emmet coc-eslint coc-html coc-htmlhint @yaegassy/coc-intelephense coc-json coc-prettier coc-sh coc-stylelint coc-toml coc-tsserver coc-yaml --global-style --ignore-scripts --no-bin-links --no-package-lock --only=prod
+npm install coc-snippets coc-blade-linter coc-css coc-cssmodules coc-emmet coc-eslint coc-html coc-htmlhint @yaegassy/coc-intelephense coc-json coc-prettier coc-sh coc-stylelint coc-toml coc-tsserver coc-yaml coc-spell-checker --global-style --ignore-scripts --no-bin-links --no-package-lock --only=prod
+
+# Set Git alias
+git config --global alias.st status
+git config --global alias.cm commit
+git config --global alias.ps push
+git config --global alias.pl pull
 
 # Install FZF
 git clone https://github.com/junegunn/fzf.git ~/.fzf
@@ -49,6 +65,9 @@ if [ `uname` = "Darwin" ]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
 
+  # Install NERDFont
+  cd ~/Library/Fonts && curl -fLo "Droid Sans Mono for Powerline Nerd Font Complete.otf" https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/DroidSansMono/complete/Droid%20Sans%20Mono%20Nerd%20Font%20Complete.otf
+
   # Install tig
   if !(type tig > /dev/null 2>&1); then
     brew install tig
@@ -58,4 +77,8 @@ if [ `uname` = "Darwin" ]; then
   if !(type ripgrep > /dev/null 2>&1); then
     brew install ripgrep
   fi
+else
+  # Install tig
+  mkdir -p ~/.local/share/fonts
+  cd ~/.local/share/fonts && curl -fLo "Droid Sans Mono for Powerline Nerd Font Complete.otf" https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/DroidSansMono/complete/Droid%20Sans%20Mono%20Nerd%20Font%20Complete.otf
 fi
