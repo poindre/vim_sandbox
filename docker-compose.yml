@@ -8,6 +8,7 @@ services:
         UID: $UID
         GID: $GID
         USERNAME: $USERNAME
+        PASSWORD: $PASSWORD
         REPO: $REPO
     container_name: vim_sandbox
     tty: true

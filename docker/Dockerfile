@@ -1,11 +1,12 @@
 FROM ubuntu:latest
 
-MAINTAINER s-yoyoyo
-
 ARG UID
 ARG GID
 ARG USERNAME
+ARG PASSWORD
 ARG REPO
+
+MAINTAINER $USERNAME
 
 # ロケール環境変数の設定
 ENV LANG ja_JP.UTF-8
@@ -75,10 +76,9 @@ RUN useradd -g ${GID} -u ${UID} -m ${USER}
 # sudo権限を付与
 RUN gpasswd -a ${USER} sudo
 # パスワードを設定
-RUN echo "$USER:yoyoyo_pass" | chpasswd
+RUN echo "$USER:$PASSWORD" | chpasswd
 
 ADD ./github_id_rsa $HOME/.ssh/id_rsa
-ADD ./github_id_rsa.pub $HOME/.ssh/id_rsa.pub
 
 RUN chmod 600 $HOME/.ssh/id_rsa
 RUN chown -R ${USER}:${USER} $HOME/.ssh 
@@ -95,7 +95,7 @@ RUN mkdir -p $HOME/.cache/dein/repos/github.com/Shougo
 
 # .dotfilesのクローン
 RUN git config --global user.email "<>"
-RUN git config --global user.name "s-yoyoyo"
+RUN git config --global user.name "$USERNAME"
 RUN ssh -o StrictHostKeyChecking=no github.com; exit 0
 RUN git clone $REPO $DOTDIR
 RUN cd $DOTDIR && git pull origin main
@@ -121,7 +121,7 @@ RUN ln -s $HOME/.zsh/.zprezto/runcoms/zlogin      $HOME/.zsh/.zlogin \
 # powerlinep10kのシンボリックリンクを設定
 RUN ln -s $DOTDIR/.p10k.zsh $HOME/.zsh/.p10k.zsh
 
-# coc^setting.jsonのシンボリックリンクを設定
+# coc-setting.jsonのシンボリックリンクを設定
 RUN ln -s $DOTDIR/coc-setting.json $HOME/.vim/coc-setting.json
 
 # anyenvをクローン
